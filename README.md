@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/node2vec-python-green) ![](https://img.shields.io/github/stars/ki-ljl/node2vec?style=social)
+![](https://img.shields.io/badge/node2vec-python-green)
 
 # node2vec
 Implement the node2vec algorithm using Python.
