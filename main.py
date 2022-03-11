@@ -20,7 +20,8 @@ def main():
     # for u, v in G.edges:
     #     G.add_edge(u, v, weight=1)
     vec = node2vec(args, G)
-    model = vec.learning_features()
+    embeddings = vec.learning_features()
+    print(embeddings)
 
 
 if __name__ == '__main__':

@@ -153,7 +153,7 @@ class node2vec:
         # print(walks[1])
         model = Word2Vec(sentences=walks, vector_size=self.args.d, window=self.args.k, min_count=0, sg=1, workers=3)
         f = model.wv
-        print(f['MmeBurgon'])
-        return f
+        res = [f[x] for x in nodes]
+        return res
 
 
