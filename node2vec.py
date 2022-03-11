@@ -6,25 +6,17 @@
 @Motto：Hungry And Humble
 
 """
-import networkx as nx
-import matplotlib.pyplot as plt
 import numpy as np
 import sys
 sys.path.append('../')
-import pandas as pd
 import numpy.random as npr
 from gensim.models import Word2Vec
 
 
 class node2vec:
-    def __init__(self, G, p, q, d, r, l, k):
+    def __init__(self, args, G):
         self.G = G
-        self.p = p  # return parameter
-        self.q = q  # in-out parameter
-        self.d = d  # dimension
-        self.r = r  # walks per node
-        self.l = l  # walk length
-        self.k = k  # window size
+        self.args = args
         self.init_transition_prob()
 
     def init_transition_prob(self):
@@ -58,16 +50,14 @@ class node2vec:
         Get the alias edge setup lists for a given edge.
         """
         g = self.G
-        p = self.p
-        q = self.q
         unnormalized_probs = []
         for v_nbr in sorted(g.neighbors(v)):
             if v_nbr == t:
-                unnormalized_probs.append(g[v][v_nbr]['weight'] / p)
+                unnormalized_probs.append(g[v][v_nbr]['weight'] / self.args.p)
             elif g.has_edge(v_nbr, t):
                 unnormalized_probs.append(g[v][v_nbr]['weight'])
             else:
-                unnormalized_probs.append(g[v][v_nbr]['weight'] / q)
+                unnormalized_probs.append(g[v][v_nbr]['weight'] / self.args.q)
         norm_const = sum(unnormalized_probs)
         normalized_probs = [float(u_prob) / norm_const for u_prob in unnormalized_probs]
 
@@ -79,8 +69,8 @@ class node2vec:
         :return: Alias and Prob
         """
         K = len(probs)
-        q = np.zeros(K)  # 对应Prob数组
-        J = np.zeros(K, dtype=np.int)  # 对应Alias数组
+        q = np.zeros(K)
+        J = np.zeros(K, dtype=np.int)
         # Sort the data into the outcomes with probabilities
         # that are larger and smaller than 1/K.
         smaller = []  #
@@ -118,7 +108,7 @@ class node2vec:
         """
         K = len(J)
         # Draw from the overall uniform mixture.
-        kk = int(np.floor(npr.rand() * K))  # 随机取一列
+        kk = int(np.floor(npr.rand() * K))  # random
 
         # Draw from the binary mixture, either keeping the
         # small one, or choosing the associated larger one.
@@ -128,10 +118,10 @@ class node2vec:
             return J[kk]
 
     def node2vecWalk(self, u):
-        walk = [u]
         g = self.G
+        walk = [u]
         nodes_info, edges_info = self.nodes_info, self.edges_info
-        while len(walk) < self.l:
+        while len(walk) < self.args.l:
             curr = walk[-1]
             v_curr = sorted(g.neighbors(curr))
             if len(v_curr) > 0:
@@ -149,10 +139,10 @@ class node2vec:
         return walk
 
     def learning_features(self):
-        g = self.G
         walks = []
+        g = self.G
         nodes = list(g.nodes())
-        for t in range(self.r):
+        for t in range(self.args.r):
             np.random.shuffle(nodes)
             for node in nodes:
                 walk = self.node2vecWalk(node)
@@ -161,22 +151,9 @@ class node2vec:
         walks = [list(map(str, walk)) for walk in walks]
         # print(walks[0])
         # print(walks[1])
-        model = Word2Vec(sentences=walks, vector_size=self.d, window=self.k, min_count=0, sg=1, workers=3)
+        model = Word2Vec(sentences=walks, vector_size=self.args.d, window=self.args.k, min_count=0, sg=1, workers=3)
         f = model.wv
         print(f['MmeBurgon'])
         return f
 
-
-if __name__ == '__main__':
-    p, q = 1, 0.5
-    d, r, l, k = 128, 10, 80, 10
-    G = nx.davis_southern_women_graph()
-    # G = nx.karate_club_graph()
-    nodes = list(G.nodes.data())
-    # G = nx.karate_club_graph()
-    G = nx.les_miserables_graph()
-    # for u, v in G.edges:
-    #     G.add_edge(u, v, weight=1)
-    node2vec = node2vec(G, p, q, d, r, l, k)
-    model = node2vec.learning_features()
 
